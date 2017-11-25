@@ -244,6 +244,28 @@ class Piece:
 
 		return outList
 
+	def gettwoHotHorizontal(self):
+		''' This one-hot encoding is going two have a one-hot vector for the pitch in an octave, 
+		and the first value in the vector is the octave'''
+		hor = self.getHorizontal()
+
+		outList = []
+
+		for time in hor:
+			newTime = []
+			for line in time:
+				pitch = line%12
+				pitchVec = [0]*12
+				pitchVec[pitch] = 1
+				octave = line/12
+				octaveVec = [0]*8
+				octaveVec[octave] = 1
+				newTime.append(octave + pitchVec)
+			outList.append(newTime)
+
+		return outList
+
+
 
 
 	#def rowCsv(self, row):
