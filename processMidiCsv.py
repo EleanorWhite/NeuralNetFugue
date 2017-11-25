@@ -24,6 +24,7 @@ STANDARD_HEADERS ='1, 0, Start_track\n\
 1, 0, Time_signature, 2, 1, 24, 8\n\
 1, 0, Key_signature, 4, "major"\n\
 1, 0, Tempo, 454545\n'
+# TODO: fix to not break endtime
 TRACK_END_HEADERS = '1, 30960, End_track'
 TRACK_END_HEADERS_LIST = ['1', '30960', 'End_track']
 
@@ -119,7 +120,7 @@ class Track:
 		''' This returns the time at which the track ends. It assumes that 
 		there is an End_track header somewhere'''
 		for i in self.headers:
-			print "header", i
+			#print "header", i
 			if i[TYPE].strip() == "End_track":
 				return int(i[TIME])
 		return None
@@ -202,16 +203,16 @@ class Piece:
 		''' Gives back an array of arrays representing each note at 16-note time intervals'''
 		time = 0
 		notes = []
-		print "first track", self.tracks[0]
+		#print "first track", self.tracks[0]
 		#print "end time", self.tracks[0].getEndTrack()
 		endTime = self.tracks[0].getEndTrack()
 
 		print "endTime", endTime
 		while time <= endTime:
-			print "time", time
+			#print "time", time
 			currNote = []
 			for track in self.tracks:
-				print "currnote:", currNote
+				#print "currnote:", currNote
 				latestNote = track.getLatestBeforeTime(time)
 				if latestNote == None:
 					currNote.append(0)
@@ -219,7 +220,7 @@ class Piece:
 				else:
 					currNote.append(track.getLatestBeforeTime(time).pitch)
 			notes.append(currNote)			
-			print "time", time, "note", currNote
+			#print "time", time, "note", currNote
 
 			time += int(SIXTEENTH_NOTE)
 
@@ -244,23 +245,28 @@ class Piece:
 
 		return outList
 
-	def gettwoHotHorizontal(self):
+	def getTwoHotHorizontal(self):
 		''' This one-hot encoding is going two have a one-hot vector for the pitch in an octave, 
 		and the first value in the vector is the octave'''
 		hor = self.getHorizontal()
 
 		outList = []
 
+
 		for time in hor:
 			newTime = []
 			for line in time:
-				pitch = line%12
-				pitchVec = [0]*12
-				pitchVec[pitch] = 1
-				octave = line/12
-				octaveVec = [0]*8
-				octaveVec[octave] = 1
-				newTime.append(octave + pitchVec)
+				# if it is a rest, zero everything out
+				if line == 0:
+				    newTime.append([0]*20)
+				else:
+					pitch = line%12
+					pitchVec = [0]*12
+					pitchVec[pitch] = 1
+					octave = line/12
+					octaveVec = [0]*8
+					octaveVec[octave] = 1
+					newTime.append(octaveVec + pitchVec)
 			outList.append(newTime)
 
 		return outList
@@ -377,7 +383,7 @@ def fromHorizontal(notes):
 
 	for li in range(1,numLines+1): # line/track number is one-indexed
 		line = genStandardHeadersList(li)
-		print "current line headers:", line
+		#print "current line headers:", line
 		for timeStep in range(len(notes)):
 			time = timeStep*MIDI_CONVERSION # about one 16th note happens every 4 time units in midi
 			t = notes[timeStep][li-1] # li-1 compensates for 1-indexing
@@ -396,7 +402,7 @@ def fromHorizontal(notes):
 		# append the end of track line
 		line.append(genEndHeadersList(li))
 		# create a track from this note array
-		print "line", line
+		#print "line", line
 		track = Track(line)
 
 		tracks.append(track)
@@ -425,11 +431,42 @@ def oneHotToHorizontal(notes):
 
 
 
+
+
 def fromOneHotHorizontal(notes):
 	''' takes in an array of OneHotHorizontal vectors, and makes a Piece object
 	arr is a 3 dimensional array, arr[timeStep][line][index in pitch vector]'''
 	horizNotes = oneHotToHorizontal(notes)
 	return fromHorizontal(horizNotes)
+
+
+def twoHotToHorizontal(notes):
+	''' Takes a piece in twoHotHorizontal representation and transforms it into
+	Horizontal representation '''
+	
+	oneHot = []
+	# convert to one hot
+	for time in notes:
+		newTime = []
+		for line in time:
+			# if it is all 0s, then it is a rest
+			if not(1 in line): 
+				newTime.append([0]*13)
+			else:
+				octave = line[0:8].index(1)
+				newTime.append([octave] + line[8:])
+
+		oneHot.append(newTime)
+
+	return oneHotToHorizontal(oneHot)
+
+def fromTwoHotHorizontal(notes):
+	''' takes a piece in TwoHotHorizontal and makes a piece objects from it
+	it returns the piece object '''
+
+	horizNotes = twoHotToHorizontal(notes)
+	return fromHorizontal(horizNotes)
+
 
 
 
@@ -444,14 +481,16 @@ def main():
 	filename = 'ArtOfFugueExpo.csv'
 	p = Piece()
 	p.fromCSV(filename)
+	print "horizontal", p.getHorizontal()
 
 	f = open('bachback.csv', 'w')
-	print "\n\n\n HERE"
-	print p.getOneHotHorizontal()
-	print "CSV"
-	#backP = fromHorizontal(p.getHorizontal())
-	backP = fromOneHotHorizontal(p.getOneHotHorizontal())
+
+	
+	print "twoHot", p.getTwoHotHorizontal()[:5]
+	backP = fromTwoHotHorizontal(p.getTwoHotHorizontal())
 	f.write(backP.csv())
+	
+	
 	#f.write(p.csv())
 	f.close()
 	print p.head

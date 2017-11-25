@@ -78,6 +78,40 @@ def goodRep(vec):
         newPitch[p] = 1
     return [octave] + newPitch
 
+def goodRepTwoHot(vec):
+    ''' This takes a predicted note vector of the TwoHotHorizontal form
+    and converts it to correct TwoHotHorizontal form'''
+
+    # check if the note is a rest
+    rest = True
+    for i in vec:
+        if i>.1:
+            rest = False
+
+
+    octaveVec = vec[:8]
+    newOctave = [0]*8
+
+    # blindly assume that this is a one-hot vector, and force it into that form
+    # by making the largest value 1 and everything else 0
+    if not rest:
+        m = max(octaveVec)
+        o = octaveVec.index(m)
+        newOctave[o] = 1
+
+
+    pitchVec = vec[8:]
+    newPitch = [0]*12
+
+    # blindly assume that this is a one-hot vector, and force it into that form
+    # by making the largest value 1 and everything else 0
+    if not rest:
+        m = max(pitchVec)
+        p = pitchVec.index(m)
+        newPitch[p] = 1
+
+    return newOctave + newPitch
+
 
 
 
@@ -197,6 +231,60 @@ def modelTwoHot(piece, numLines, N_values, N_epochs):
 
 
 
+def trainTwoHot(N_epochs):
+
+    filename = 'ArtOfFugueExpo.csv'
+    outfile = 'out.csv'
+    p = Piece()
+    p.fromCSV(filename)
+    
+    #
+    print 
+    p1 = p.getTwoHotHorizontal()
+
+    #build_model(p1, len(p1), 8)
+    thsize = 20 # num ints in twoHotHorizontal
+    numLines = 4
+    m = modelTwoHot(p1, numLines, thsize, N_epochs)
+
+    first = p1[0: 0 + TMP_MAX_LEN]
+    first = np.reshape(first, (1,numLines,thsize))
+    print "\n\n first", first
+    pred = m.predict(first)
+    pred = np.reshape(pred, (1,numLines,thsize))
+    print "\n\n\n prediction", pred
+
+
+    # add first prediction to general prediction list
+    fullPred = []
+    oneHotPred = []
+    for noteVec in pred[0]:
+        oneHotPred.append(goodRep(np.ndarray.tolist(noteVec)))
+    fullPred.append(oneHotPred)
+
+    # predict a string of 32 notes
+    for i in range(16*4):
+        pred = m.predict(pred)
+        pred = np.reshape(pred, (1,numLines,thsize))
+
+        # force them to conform to the right pitch rep for oneHotHorizontal
+        for noteVec in pred[0]:
+            print goodRepTwoHot(np.ndarray.tolist(noteVec))
+        print "end measure"
+
+        # put each note in a general oneHotHorizontal arrangement
+        oneHotPred = []
+        for noteVec in pred[0]:
+            oneHotPred.append(goodRepTwoHot(np.ndarray.tolist(noteVec)))
+        fullPred.append(oneHotPred)
+
+
+    #print "full pred", fullPred
+    # transform oneHotHorizontal to piece and then to csv
+    predPiece = fromOneHotHorizontal(fullPred)
+    predPieceCsv = open(outfile, 'w')
+    predPieceCsv.write(predPiece.csv())
+
 
 
 
@@ -207,7 +295,7 @@ def modelTwoHot(piece, numLines, N_values, N_epochs):
 # BRAZENLY STOLEN FROM DEEPJAZZ
 # ------------------------------
 
-def main(args):
+'''def main(args):
 
 
     try:
@@ -263,8 +351,12 @@ def main(args):
     # transform oneHotHorizontal to piece and then to csv
     predPiece = fromOneHotHorizontal(fullPred)
     predPieceCsv = open(outfile, 'w')
-    predPieceCsv.write(predPiece.csv())
+    predPieceCsv.write(predPiece.csv())'''
         
+
+
+def main(args):
+    trainTwoHot(1)
 
 
 
