@@ -258,7 +258,7 @@ class Piece:
 			for line in time:
 				# if it is a rest, zero everything out
 				if line == 0:
-				    newTime.append([1] + [0]*19)
+				    newTime.append([1]*8 + [0]*12)
 				else:
 					pitch = line%12
 					pitchVec = [0]*12
@@ -444,7 +444,7 @@ def twoHotToHorizontal(notes):
 		newTime = []
 		for line in time:
 			# if it is all 0s, then it is a rest
-			if not(1 in line[1:]): 
+			if not(1 in line[9:]): 
 				newTime.append([1] +[0]*12)
 			else:
 				octave = line[0:8].index(1)
