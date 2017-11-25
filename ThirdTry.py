@@ -95,7 +95,7 @@ def model(piece):
     numLines = 4
     N_values = 13
     max_len = TMP_MAX_LEN
-    N_epochs = 100
+    N_epochs = 1000
 
     # cut the corpus into semi-redundant sequences of max_len values
     step = 3
@@ -161,7 +161,7 @@ def main(args):
     except:
         N_epochs = 128 # default
 
-    filename = 'ArtOfFugueExpoFirst4.csv'
+    filename = 'ArtOfFugueExpo.csv'
     outfile = 'out.csv'
     p = Piece()
     p.fromCSV(filename)
@@ -189,7 +189,7 @@ def main(args):
     fullPred.append(oneHotPred)
 
     # predict a string of 32 notes
-    for i in range(32):
+    for i in range(16*4):
         pred = m.predict(pred)
         pred = np.reshape(pred, (1,4,13))
 
