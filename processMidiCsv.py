@@ -49,8 +49,8 @@ def genStandardHeadersList(trackNum):
 	[trackNum, '0', 'Key_signature', '4', "major"], \
 	[trackNum, '0', 'Tempo', '454545']]
 
-def genEndHeadersList(trackNum):
-	return [trackNum, '30960', 'End_track']
+def genEndHeadersList(trackNum, time):
+	return [trackNum, time, 'End_track']
 
 
 #filename = 'bach.csv'
@@ -258,7 +258,7 @@ class Piece:
 			for line in time:
 				# if it is a rest, zero everything out
 				if line == 0:
-				    newTime.append([0]*20)
+				    newTime.append([1] + [0]*19)
 				else:
 					pitch = line%12
 					pitchVec = [0]*12
@@ -271,14 +271,6 @@ class Piece:
 
 		return outList
 
-
-
-
-	#def rowCsv(self, row):
-	#	s = ""
-	#	for i in row:
-	#		s += i + ', '
-	#	return s + '\n'
 
 	def arrToCsv(self, arr):
 		s = ""
@@ -383,6 +375,7 @@ def fromHorizontal(notes):
 
 	for li in range(1,numLines+1): # line/track number is one-indexed
 		line = genStandardHeadersList(li)
+		endTime = 0
 		#print "current line headers:", line
 		for timeStep in range(len(notes)):
 			time = timeStep*MIDI_CONVERSION # about one 16th note happens every 4 time units in midi
@@ -398,9 +391,10 @@ def fromHorizontal(notes):
 					line.append(noteWithPitch(t,li,time,True).toArr())
 			# set prevNote for next round to current note
 			prevNote = t
+			endTime = time
 
 		# append the end of track line
-		line.append(genEndHeadersList(li))
+		line.append(genEndHeadersList(li), endTime)
 		# create a track from this note array
 		#print "line", line
 		track = Track(line)
@@ -450,8 +444,8 @@ def twoHotToHorizontal(notes):
 		newTime = []
 		for line in time:
 			# if it is all 0s, then it is a rest
-			if not(1 in line): 
-				newTime.append([0]*13)
+			if not(1 in line[1:]): 
+				newTime.append([1] +[0]*12)
 			else:
 				octave = line[0:8].index(1)
 				newTime.append([octave] + line[8:])
