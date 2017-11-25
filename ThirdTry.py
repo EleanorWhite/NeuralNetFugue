@@ -161,7 +161,7 @@ def model(piece):
 
     # build a 2 stacked LSTM
     model = Sequential()
-    model.add(LSTM(70, return_sequences=False, input_shape=(numLines, N_values)))
+    model.add(LSTM(60, return_sequences=False, input_shape=(numLines, N_values)))
     model.add(Dropout(0.2))
     #model.add(LSTM(128, return_sequences=True, input_shape=(numLines, N_values)))
     #model.add(Dropout(0.2))
@@ -356,7 +356,7 @@ def trainTwoHot(N_epochs):
 
 
 def main(args):
-    trainTwoHot(1)
+    trainTwoHot(500)
 
 
 
