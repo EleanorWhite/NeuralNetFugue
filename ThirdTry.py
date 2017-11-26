@@ -8,52 +8,6 @@ from keras.layers.recurrent import LSTM
 
 TMP_MAX_LEN= 1
 
-# TODO: figure out how to parse the CSV midi files
-
-# ------------------------------
-# BRAZENLY STOLEN FROM DEEPJAZZ
-# ------------------------------
-def build_model(corpus, val_indices, max_len, N_epochs=128):
-    # number of different values or words in corpus
-    N_values = len(set(corpus))
-
-    # cut the corpus into semi-redundant sequences of max_len values
-    step = 3
-    sentences = []
-    next_values = []
-    # the model is trained to take a sequence of max_len, and return a sequence
-    # that is shifted over 3 notes -- most of it is just parroting back
-    for i in range(0, len(corpus) - max_len, step):
-        sentences.append(corpus[i: i + max_len])
-        next_values.append(corpus[i + max_len])
-    print('nb sequences:', len(sentences))
-
-    # transform data into binary matrices
-    X = np.zeros((len(sentences), max_len, N_values), dtype=np.bool)
-    y = np.zeros((len(sentences), N_values), dtype=np.bool)
-    for i, sentence in enumerate(sentences):
-        for t, val in enumerate(sentence):
-            X[i, t, val_indices[val]] = 1
-        y[i, val_indices[next_values[i]]] = 1
-
-    # build a 2 stacked LSTM
-    model = Sequential()
-    model.add(LSTM(128, return_sequences=True, input_shape=(max_len, N_values)))
-    model.add(Dropout(0.2))
-    model.add(LSTM(128, return_sequences=False))
-    model.add(Dropout(0.2))
-    model.add(Dense(N_values))
-    model.add(Activation('softmax'))
-
-    model.compile(loss='categorical_crossentropy', optimizer='rmsprop')
-
-    model.fit(X, y, batch_size=128, nb_epoch=N_epochs)
-
-    return model
-
-    # ------------------------------
-    # END
-    # ------------------------------
 
 
 def goodRep(vec):
@@ -78,37 +32,38 @@ def goodRep(vec):
         newPitch[p] = 1
     return [octave] + newPitch
 
+
 def goodRepTwoHot(vec):
     ''' This takes a predicted note vector of the TwoHotHorizontal form
     and converts it to correct TwoHotHorizontal form'''
 
-    # check if the note is a rest
-    rest = True
-    for i in vec:
-        if i>.1:
-            rest = False
-
-
     octaveVec = vec[:8]
     newOctave = [0]*8
-
-    # blindly assume that this is a one-hot vector, and force it into that form
-    # by making the largest value 1 and everything else 0
-    if not rest:
-        m = max(octaveVec)
-        o = octaveVec.index(m)
-        newOctave[o] = 1
-
 
     pitchVec = vec[8:]
     newPitch = [0]*12
 
-    # blindly assume that this is a one-hot vector, and force it into that form
-    # by making the largest value 1 and everything else 0
-    if not rest:
+
+    # check if the note is a rest
+    # (technically, rests should always be of the form [1]*8+[0]*12, 
+    # but we're only checking the [0]*12 part)
+    rest = True
+    for i in pitchVec:
+        if i>.1:
+            rest = False
+    if rest:
+        return [1]*8 + [0]*12
+
+    # blindly assume that the pitch and octave are a one-hot vectors, and force 
+    # them into that form by making the largest value 1 and everything else 0
+    else: #not a rest
         m = max(pitchVec)
         p = pitchVec.index(m)
         newPitch[p] = 1
+
+        m = max(octaveVec)
+        o = octaveVec.index(m)
+        newOctave[o] = 1 
 
     return newOctave + newPitch
 
@@ -263,6 +218,8 @@ def trainTwoHot(N_epochs):
     fullPred.append(oneHotPred)
 
     # predict a string of 32 notes
+    # TODO: for this to make sense, you need to add the past history to each of the input
+    # otherwise it will always think it is predicting the second note
     for i in range(16*4):
         pred = m.predict(pred)
         pred = np.reshape(pred, (1,numLines,thsize))
