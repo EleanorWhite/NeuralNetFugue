@@ -120,58 +120,6 @@ def unwrap(arr):
 
     return flatArr
 
-def model(piece):
-
-    numLines = 4
-    N_values = 13
-    max_len = TMP_MAX_LEN
-    N_epochs = 3000
-    
-
-    # cut the corpus into semi-redundant sequences of max_len values
-    step = 3
-    sentences = []
-    next_values = []
-
-    for i in range(0, len(piece) - 2*max_len, step):
-        print "piece i", piece[i]
-        sentences.append(piece[i])
-        print "flat", unwrap(piece[i + 1])
-        next_values.append(unwrap(piece[i + 1]))
-    print('nb sequences:', len(sentences))
-
-    X = np.zeros((len(sentences), numLines, N_values), dtype=np.bool)
-    y = np.zeros((len(sentences), numLines*N_values), dtype=np.bool)
-
-    print "\n\n\nx", sentences
-    print "\n\n\ny", next_values
-
-    #for i, sentence in enumerate(sentences):
-    #    for t, val in enumerate(sentence):
-    #        X[i, t, val_indices[val]] = 1
-    #    y[i, val_indices[next_values[i]]] = 1
-
-
-    #print "\n\n\nx", X
-    #print "\n\n\ny", y
-
-    # build a 2 stacked LSTM
-    model = Sequential()
-    model.add(LSTM(60, return_sequences=False, input_shape=(numLines, N_values)))
-    model.add(Dropout(0.2))
-    #model.add(LSTM(128, return_sequences=True, input_shape=(numLines, N_values)))
-    #model.add(Dropout(0.2))
-    #model.add(LSTM(128, return_sequences=False))
-    #model.add(Dropout(0.2))
-    model.add(Dense(numLines*N_values))
-    model.add(Activation('hard_sigmoid')) # used to be softmax. consider
-
-    model.compile(loss='categorical_crossentropy', optimizer='rmsprop')
-
-    model.fit(sentences, next_values, batch_size=1, epochs=N_epochs)
-
-    return model
-
 
 
 def modelTwoHot(piece, numLines, N_values, N_epochs):
@@ -186,9 +134,6 @@ def modelTwoHot(piece, numLines, N_values, N_epochs):
     sentences = []
     next_values = []
 
-    # TODO: consider whether you are putting the LSTM things in in such a way
-    # that it is only using the previous note to predict the next one, rather than the whole 
-    # last part of the piece
 
     for i in range(0, len(piece) - max_len - 1, step):
         print "piece i", piece[i]
@@ -205,18 +150,6 @@ def modelTwoHot(piece, numLines, N_values, N_epochs):
 
     X = np.zeros((len(sentences), max_len, numLines*N_values), dtype=np.bool)
     y = np.zeros((len(sentences), numLines*N_values), dtype=np.bool)
-
-    #print "\n\n\nx", sentences
-    #print "\n\n\ny", next_values
-
-    #for i, sentence in enumerate(sentences):
-    #    for t, val in enumerate(sentence):
-    #        X[i, t, val_indices[val]] = 1
-    #    y[i, val_indices[next_values[i]]] = 1
-
-
-    print "\n\n\nx", X
-    print "\n\n\ny", y
 
     # build a 2 stacked LSTM
     model = Sequential()
@@ -244,13 +177,10 @@ def modelCC(pieces, numPieces, numLines, N_values, N_epochs):
     #N_epochs = 1000
 
     # cut the corpus into semi-redundant sequences of max_len values
-    step = 8
+    step = 16
     sentences = []
     next_values = []
 
-    # TODO: consider whether you are putting the LSTM things in in such a way
-    # that it is only using the previous note to predict the next one, rather than the whole 
-    # last part of the piece
     for piece in pieces:
         for i in range(0, len(piece) - max_len - 1, step):
             print "piece i", piece[i]
@@ -268,19 +198,11 @@ def modelCC(pieces, numPieces, numLines, N_values, N_epochs):
     X = np.zeros((len(sentences), max_len, numLines*N_values), dtype=np.bool)
     y = np.zeros((len(sentences), numLines*N_values), dtype=np.bool)
 
-    #print "\n\n\nx", sentences
-    #print "\n\n\ny", next_values
-
-    #for i, sentence in enumerate(sentences):
-    #    for t, val in enumerate(sentence):
-    #        X[i, t, val_indices[val]] = 1
-    #    y[i, val_indices[next_values[i]]] = 1
-
 
     print "\n\n\nx", X
     print "\n\n\ny", y
 
-    # build a 2 stacked LSTM
+    # make LSTM
     model = Sequential()
     model.add(LSTM(100, return_sequences=False, input_shape=(max_len, numLines*N_values)))
     model.add(Dropout(0.2))
