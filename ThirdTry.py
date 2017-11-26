@@ -145,6 +145,10 @@ def modelTwoHot(piece, numLines, N_values, N_epochs):
     sentences = []
     next_values = []
 
+    # TODO: consider whether you are putting the LSTM things in in such a way
+    # that it is only using the previous note to predict the next one, rather than the whole 
+    # last part of the piece
+
     for i in range(0, len(piece) - 2*max_len, step):
         print "piece i", piece[i]
         sentences.append(piece[i])
@@ -155,8 +159,8 @@ def modelTwoHot(piece, numLines, N_values, N_epochs):
     X = np.zeros((len(sentences), numLines, N_values), dtype=np.bool)
     y = np.zeros((len(sentences), numLines*N_values), dtype=np.bool)
 
-    print "\n\n\nx", sentences
-    print "\n\n\ny", next_values
+    #print "\n\n\nx", sentences
+    #print "\n\n\ny", next_values
 
     #for i, sentence in enumerate(sentences):
     #    for t, val in enumerate(sentence):
@@ -164,8 +168,8 @@ def modelTwoHot(piece, numLines, N_values, N_epochs):
     #    y[i, val_indices[next_values[i]]] = 1
 
 
-    #print "\n\n\nx", X
-    #print "\n\n\ny", y
+    print "\n\n\nx", X
+    print "\n\n\ny", y
 
     # build a 2 stacked LSTM
     model = Sequential()
@@ -209,19 +213,28 @@ def trainTwoHot(N_epochs):
     pred = np.reshape(pred, (1,numLines,thsize))
     print "\n\n\n prediction", pred
 
+    currentPred = first
 
     # add first prediction to general prediction list
     fullPred = []
-    oneHotPred = []
+    twoHotPred = []
     for noteVec in pred[0]:
-        oneHotPred.append(goodRep(np.ndarray.tolist(noteVec)))
-    fullPred.append(oneHotPred)
+        twoHotPred.append(goodRepTwoHot(np.ndarray.tolist(noteVec)))
+    fullPred.append(twoHotPred)
+    print "twoHotPred", twoHotPred
+    newData = np.reshape(np.asarray(twoHotPred), (1,numLines,thsize))
+    print "newData", newData
+    print "currentPred", currentPred
+    currentPred = np.concatenate((currentPred, newData), axis=0)
+
 
     # predict a string of 32 notes
     # TODO: for this to make sense, you need to add the past history to each of the input
     # otherwise it will always think it is predicting the second note
     for i in range(16*4):
-        pred = m.predict(pred)
+        print "current pred", currentPred
+        pred = m.predict(currentPred)
+        print "pred", pred
         pred = np.reshape(pred, (1,numLines,thsize))
 
         # force them to conform to the right pitch rep for oneHotHorizontal
@@ -230,13 +243,16 @@ def trainTwoHot(N_epochs):
         print "end measure"
 
         # put each note in a general oneHotHorizontal arrangement
-        oneHotPred = []
+        twoHotPred = []
         for noteVec in pred[0]:
-            oneHotPred.append(goodRepTwoHot(np.ndarray.tolist(noteVec)))
+            twoHotPred.append(goodRepTwoHot(np.ndarray.tolist(noteVec)))
         fullPred.append(oneHotPred)
 
+        newData = np.reshape(np.asarray(twoHotPred), (1,numLines,thsize))
+        print "newData", newData
+        print "currentPred", currentPred
+        currentPred = np.concatenate((currentPred, newData), axis=0)
 
-    #print "full pred", fullPred
     # transform oneHotHorizontal to piece and then to csv
     predPiece = fromOneHotHorizontal(fullPred)
     predPieceCsv = open(outfile, 'w')
@@ -313,7 +329,7 @@ def trainTwoHot(N_epochs):
 
 
 def main(args):
-    trainTwoHot(500)
+    trainTwoHot(1)
 
 
 

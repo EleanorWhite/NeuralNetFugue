@@ -176,7 +176,7 @@ class Piece:
 	def fromCSV(self,filename):
 		''' Reads in a piece from the output of the midicsv program '''
 
-		verbose("Reading in Piece from file", filename)
+		verbose("Reading in Piece from file " + filename)
 		
 		trackArrs = []
 		tracks = []
