@@ -291,6 +291,39 @@ class Piece:
 
 		return outList
 
+	def getCC(self):
+		''' This is an encoding much like twoHotHorizontal, but instead of having a one-hot vector
+		it is ones until the index where it is normally 1, at which point it switches to 0 '''
+
+		verbose("Getting CC form from Piece Object")
+
+		hor = self.getHorizontal()
+
+		outList = []
+
+
+		for time in hor:
+			newTime = []
+			for line in time:
+				print "line", line
+				# if it is a rest, zero everything out
+				if line == 0:
+				    newTime.append([1]*8 + [0]*12)
+				else:
+					# convert pitch int into one hot vector
+					pitch = line%12 + 1
+					pitchVec = [1]*pitch + [0]*(12-pitch)
+					print "pitchVec", pitchVec
+					# convert octave int into one hot vector
+					octave = line/12 + 1
+					octaveVec = [1]*octave + [0]*(8-octave)
+					print "newLine", octaveVec + pitchVec
+					newTime.append(octaveVec + pitchVec)
+
+			outList.append(newTime)
+
+		return outList
+
 
 	def arrToCsv(self, arr):
 		s = ""
@@ -402,7 +435,6 @@ def fromHorizontal(notes):
 	for li in range(1,numLines+1): # line/track number is one-indexed
 		line = genStandardHeadersList(li)
 		endTime = 0
-		#print "current line headers:", line
 		for timeStep in range(len(notes)):
 			time = timeStep*MIDI_CONVERSION # about one 16th note happens every 4 time units in midi
 			t = notes[timeStep][li-1] # li-1 compensates for 1-indexing
@@ -468,17 +500,21 @@ def twoHotToHorizontal(notes):
 
 	verbose("Converting TwoHotHorizontal form to Horizontal form")
 	
+
 	oneHot = []
 	# convert to one hot
 	for time in notes:
 		newTime = []
 		for line in time:
-			# if it is all 0s, then it is a rest
-			if not(1 in line[9:]): 
+			print "two hot input", line
+			# if the pitch vector is all 0s, then it is a rest
+			if not(1 in line[8:]): 
 				newTime.append([1] +[0]*12)
+				print "REST"
 			else:
 				octave = line[0:8].index(1)
 				newTime.append([octave] + line[8:])
+				print "two hot output", [octave] + line[8:]
 
 		oneHot.append(newTime)
 
@@ -490,15 +526,68 @@ def fromTwoHotHorizontal(notes):
 
 	verbose("Converting TwoHotHorizontal form to Piece object")
 
+
 	horizNotes = twoHotToHorizontal(notes)
+	return fromHorizontal(horizNotes)
+
+
+def CCToHorizontal(notes):
+	''' Takes a piece in CC representation and converts it to horizontal '''
+
+	verbose("Converting TwoHotHorizontal form to Horizontal form")
+	
+	CC = []
+	# convert to one hot
+	for time in notes:
+		print "time", time
+		newTime = []
+		for line in time:
+			# if the pitch vector is all 0s, then it is a rest
+			if not(1 in line[8:]): 
+				print "REST"
+				newTime.append([1]*8 +[0]*12)
+			else:
+				pitch = 0 # default
+				# These statements account for the possibility that all the bits
+				# are 1s, in which case the last bit should be 1
+				if not(0 in line[8:]):
+					pitch = 11
+				else:
+					pitch = line[8:].index(0) - 1
+				newPitchVec = [0]*12
+				newPitchVec[pitch] = 1
+
+				octave = 0 # default
+				if not(0 in line[:8]):
+					octave = 7
+				else:
+					octave = line[0:8].index(0) - 1
+				newOctaveVec = [0]*8
+				newOctaveVec[octave] = 1
+				print "newVec", newOctaveVec + newPitchVec
+				newTime.append(newOctaveVec + newPitchVec)
+
+		CC.append(newTime)
+
+	return twoHotToHorizontal(CC)
+
+def fromCC(notes):
+	''' takes a piece in CC and makes a piece objects from it
+	it returns the piece object '''
+
+	verbose("Converting CC form to Piece object")
+
+	horizNotes = CCToHorizontal(notes)
 	return fromHorizontal(horizNotes)
 
 
 
 
 
+
+
 def verbose(str):
-	if True:
+	if False:
 		print str
 
 
@@ -517,8 +606,8 @@ def main():
 	f = open('bachback.csv', 'w')
 
 	
-	print "twoHot", p.getTwoHotHorizontal()[:5]
-	backP = fromTwoHotHorizontal(p.getTwoHotHorizontal())
+	#print "\n\n\nCC", p.getCC()[32:35]
+	backP = fromCC(p.getCC())
 	f.write(backP.csv())
 	
 	
