@@ -236,6 +236,68 @@ def modelTwoHot(piece, numLines, N_values, N_epochs):
     return model
 
 
+def modelCC(pieces, numPieces, numLines, N_values, N_epochs):
+
+    #numLines = 4
+    #N_values = 13
+    max_len = TMP_MAX_LEN
+    #N_epochs = 1000
+
+    # cut the corpus into semi-redundant sequences of max_len values
+    step = 8
+    sentences = []
+    next_values = []
+
+    # TODO: consider whether you are putting the LSTM things in in such a way
+    # that it is only using the previous note to predict the next one, rather than the whole 
+    # last part of the piece
+    for piece in pieces:
+        for i in range(0, len(piece) - max_len - 1, step):
+            print "piece i", piece[i]
+
+            # unwrap all note vectors
+            past = []
+            for note in piece[i:i+max_len]:
+                past.append(unwrap(note))
+            sentences.append(past)
+
+            print "flat", unwrap(piece[i + max_len + 1])
+            next_values.append(unwrap(piece[i + max_len + 1]))
+        print('nb sequences:', len(sentences))
+
+    X = np.zeros((len(sentences), max_len, numLines*N_values), dtype=np.bool)
+    y = np.zeros((len(sentences), numLines*N_values), dtype=np.bool)
+
+    #print "\n\n\nx", sentences
+    #print "\n\n\ny", next_values
+
+    #for i, sentence in enumerate(sentences):
+    #    for t, val in enumerate(sentence):
+    #        X[i, t, val_indices[val]] = 1
+    #    y[i, val_indices[next_values[i]]] = 1
+
+
+    print "\n\n\nx", X
+    print "\n\n\ny", y
+
+    # build a 2 stacked LSTM
+    model = Sequential()
+    #model.add(LSTM(20, return_sequences=False, input_shape=(max_len, numLines*N_values)))
+    #model.add(Dropout(0.2))
+    model.add(LSTM(30, return_sequences=True, input_shape=(max_len, numLines*N_values)))
+    model.add(Dropout(0.1))
+    model.add(LSTM(30, return_sequences=False))
+    model.add(Dropout(0.1))
+    model.add(Dense(numLines*N_values))
+    model.add(Activation('hard_sigmoid')) # used to be softmax. consider
+
+    model.compile(loss='categorical_crossentropy', optimizer='rmsprop')
+
+    model.fit(sentences, next_values, batch_size=1, epochs=N_epochs)
+
+    return model
+
+
 
 def trainTwoHot(N_epochs):
 
@@ -339,20 +401,25 @@ def trainCC(N_epochs):
 
     filename = 'ArtOfFugueExpo.csv'
     outfile = 'out.csv'
-    p = Piece()
-    p.fromCSV(filename)
+    p1 = Piece()
+    p1.fromCSV(filename)
+    p1cc = p1.getCC()
+
+    filename = 'SecondArtOfFugueExpo.csv'
+    p2 = Piece()
+    p2.fromCSV(filename)
+    p2cc = p2.getCC()
+
     
-    #
-    print 
-    p1 = p.getCC()
 
     #build_model(p1, len(p1), 8)
     thsize = 20 # num ints in twoHotHorizontal
     numLines = 4
-    m = modelTwoHot(p1, numLines, thsize, N_epochs)
+    numPieces = 2
+    m = modelCC([p1cc,p2cc], numPieces, numLines, thsize, N_epochs)
 
 
-    first = p1[0: 0 + TMP_MAX_LEN]
+    first = p1cc[0: 0 + TMP_MAX_LEN]
     first = np.reshape(first, (1,TMP_MAX_LEN,numLines*thsize))
 
     currentPred = first # the current four measures we're predicting off of
