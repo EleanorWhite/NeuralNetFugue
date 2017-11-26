@@ -394,7 +394,7 @@ def fromHorizontal(notes):
 			endTime = time
 
 		# append the end of track line
-		line.append(genEndHeadersList(li), endTime)
+		line.append(genEndHeadersList(li, endTime))
 		# create a track from this note array
 		#print "line", line
 		track = Track(line)
