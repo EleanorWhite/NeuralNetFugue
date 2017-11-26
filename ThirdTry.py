@@ -68,6 +68,47 @@ def goodRepTwoHot(vec):
     return newOctave + newPitch
 
 
+def firstBelowInd(arr, filter):
+    for i in range(len(arr)):
+        if arr[i] < filter:
+            return i
+    return len(arr)
+
+def goodRepCC(vec):
+    ''' This takes a predicted note vector of the TwoHotHorizontal form
+    and converts it to correct TwoHotHorizontal form'''
+
+    zFilt = .3 # anything below this is a 0 and above is a 1
+
+    octaveVec = vec[:8]
+    newOctave = [0]*8
+
+    pitchVec = vec[8:]
+    newPitch = [0]*12
+
+
+    # check if the note is a rest
+    # (technically, rests should always be of the form [1]*8+[0]*12, 
+    # but we're only checking the [0]*12 part)
+    rest = True
+    for i in pitchVec:
+        if i> zFilt:
+            rest = False
+    if rest:
+        return [1]*8 + [0]*12
+
+    # blindly assume that the pitch and octave are a one-hot vectors, and force 
+    # them into that form by making the largest value 1 and everything else 0
+    else: #not a rest
+        p = firstBelowInd(pitchVec, zFilt)
+        newPitch = [1]*p + [0]*(12-p)
+
+        o = firstBelowInd(octaveVec, zFilt)
+        newOctave = [1]*o + [0]*(8-o)
+
+    return newOctave + newPitch
+
+
 
 
 def unwrap(arr):
@@ -294,6 +335,77 @@ def trainTwoHot(N_epochs):
 
 
 
+def trainCC(N_epochs):
+
+    filename = 'ArtOfFugueExpo.csv'
+    outfile = 'out.csv'
+    p = Piece()
+    p.fromCSV(filename)
+    
+    #
+    print 
+    p1 = p.getCC()
+
+    #build_model(p1, len(p1), 8)
+    thsize = 20 # num ints in twoHotHorizontal
+    numLines = 4
+    m = modelTwoHot(p1, numLines, thsize, N_epochs)
+
+
+    first = p1[0: 0 + TMP_MAX_LEN]
+    first = np.reshape(first, (1,TMP_MAX_LEN,numLines*thsize))
+
+    currentPred = first # the current four measures we're predicting off of
+    fullPred = first # the full prediction
+
+    # predict a string of 32 notes
+    # TODO: for this to make sense, you need to add the past history to each of the input
+    # otherwise it will always think it is predicting the second note
+    lenComp = 16*4
+    for i in range(lenComp):
+        print "current pred", currentPred
+        pred = m.predict(currentPred)
+        pred = np.reshape(pred, (1,numLines*thsize))
+        print "pred", pred
+
+        # put each note in a general oneHotHorizontal arrangement
+        CCPred = []
+        #for noteVec in pred:
+        # go through each note vector in the prediction 
+        listPred = np.ndarray.tolist(pred)
+        print "listPred", listPred
+        for line in range(0,numLines*thsize,thsize):
+
+            print "bad noteVec", listPred[0][line:line+thsize]
+            CCPred.append(goodRepCC(listPred[0][line:line+thsize]))
+            print "good noteVec", goodRepCC(listPred[0][line:line+thsize])
+        #fullPred.append(oneHotPred)
+
+        newData = np.reshape(np.asarray(CCPred), (1,numLines*thsize))
+        #newData = np.reshape(np.asarray(twoHotPred), (1,numLines,thsize))
+
+        print "newData", newData
+        print "currentPred[0]1", currentPred[0][1:]
+        currentPred = np.concatenate((currentPred[0][1:], newData), axis=0)
+        currentPred = np.reshape(currentPred, (1,TMP_MAX_LEN, numLines*thsize))
+        print "currentPred2", currentPred
+        print "fullPred[0]1", fullPred[0]
+        fullPred = np.concatenate((fullPred[0], newData), axis=0)
+        fullPred = np.reshape(fullPred, (1,TMP_MAX_LEN+i+1, numLines*thsize))
+        print "fullPred2", fullPred
+
+
+    # how we used to reshape things:
+    #pred = np.reshape(pred, (1,numLines,thsize))
+    fullPred = np.reshape(fullPred, (TMP_MAX_LEN+lenComp, numLines, thsize))
+    fullPredArray = np.ndarray.tolist(fullPred)
+    print "fullPredArray", fullPredArray
+
+    # transform oneHotHorizontal to piece and then to csv
+    predPiece = fromCC(fullPredArray)
+    predPieceCsv = open(outfile, 'w')
+    predPieceCsv.write(predPiece.csv())
+
 
 
 
@@ -363,7 +475,9 @@ def trainTwoHot(N_epochs):
 
 
 def main(args):
-    trainTwoHot(10000)
+    #a = [0.8633742928504944, 0.8520313501358032, 0.6155416965484619, 0.8277215957641602, 0.7745899558067322, 0.6654524803161621, 0.5017514824867249, 0.5754479169845581, 0.3196893334388733, 0.364773690700531, 0.2010064721107483, 0.3020211458206177, 0.21267035603523254, 0.22699597477912903, 0.23443511128425598, 0.2467953860759735, 0.32214605808258057, 0.1710146963596344, 0.18880566954612732, 0.21740081906318665]
+    #print goodRepCC(a)
+    trainCC(1)
 
 
 
