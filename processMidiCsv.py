@@ -58,6 +58,9 @@ def genEndHeadersList(trackNum, time):
 class Note:
 
 	def __init__(self,arr):
+
+		verbose("Creating note object")
+
 		self.track = int(arr[0])
 		self.time = int(arr[1])
 		self.type = arr[2].strip()
@@ -96,6 +99,9 @@ class Track:
 
 	# TODO: change this to reflect 
 	def __init__(self, arr):
+
+		verbose("Creating track object")
+
 		headers = []
 		notes = []
 		channelEvents = []
@@ -120,7 +126,6 @@ class Track:
 		''' This returns the time at which the track ends. It assumes that 
 		there is an End_track header somewhere'''
 		for i in self.headers:
-			#print "header", i
 			if i[TYPE].strip() == "End_track":
 				return int(i[TIME])
 		return None
@@ -160,12 +165,18 @@ class Piece:
 
 	def __init__(self):
 		''' Creates a sketch default piece object '''
+
+		verbose("Creating default Piece object")
+
 		self.head = None
 		self.endFile = None
 		self.tracks = []
 
 
 	def fromCSV(self,filename):
+		''' Reads in a piece from the output of the midicsv program '''
+
+		verbose("Reading in Piece from file", filename)
 		
 		trackArrs = []
 		tracks = []
@@ -201,26 +212,25 @@ class Piece:
 
 	def getHorizontal(self):
 		''' Gives back an array of arrays representing each note at 16-note time intervals'''
+
+		verbose("Getting Horizontal form from Piece object")
+
 		time = 0
 		notes = []
-		#print "first track", self.tracks[0]
-		#print "end time", self.tracks[0].getEndTrack()
+
 		endTime = self.tracks[0].getEndTrack()
 
-		print "endTime", endTime
 		while time <= endTime:
-			#print "time", time
-			currNote = []
+			currNote = [] # an array of the pitch for each line
 			for track in self.tracks:
-				#print "currnote:", currNote
 				latestNote = track.getLatestBeforeTime(time)
-				if latestNote == None:
+
+				# If the note is a rest in this line, it is 0
+				if latestNote == None: 
 					currNote.append(0)
-					#currNote.append(latestNote)
 				else:
 					currNote.append(track.getLatestBeforeTime(time).pitch)
 			notes.append(currNote)			
-			#print "time", time, "note", currNote
 
 			time += int(SIXTEENTH_NOTE)
 
@@ -229,6 +239,9 @@ class Piece:
 	def getOneHotHorizontal(self):
 		''' This one-hot encoding is going two have a one-hot vector for the pitch in an octave, 
 		and the first value in the vector is the octave'''
+
+		verbose("Getting OneHotHorizontal form from Piece object")
+
 		hor = self.getHorizontal()
 
 		outList = []
@@ -236,18 +249,23 @@ class Piece:
 		for time in hor:
 			newTime = []
 			for line in time:
+				# convert pitch int into a one hot vector
 				pitch = line%12
 				pitchVec = [0]*12
 				pitchVec[pitch] = 1
+
 				octave = line/12
+
 				newTime.append([octave] + pitchVec)
 			outList.append(newTime)
-
 		return outList
 
 	def getTwoHotHorizontal(self):
 		''' This one-hot encoding is going two have a one-hot vector for the pitch in an octave, 
 		and the first value in the vector is the octave'''
+
+		verbose("Getting TwoHotHorizontal form from Piece object")
+
 		hor = self.getHorizontal()
 
 		outList = []
@@ -260,9 +278,11 @@ class Piece:
 				if line == 0:
 				    newTime.append([1]*8 + [0]*12)
 				else:
+					# convert pitch int into one hot vector
 					pitch = line%12
 					pitchVec = [0]*12
 					pitchVec[pitch] = 1
+					# convert octave int into one hot vector
 					octave = line/12
 					octaveVec = [0]*8
 					octaveVec[octave] = 1
@@ -282,6 +302,11 @@ class Piece:
 
 
 	def csv(self):
+		''' This takes in a Piece object and returns the csv representation that 
+		can feed into csvmidi '''
+
+		verbose("Getting csv string for Piece object")
+
 		s = ""
 		s += self.arrToCsv(self.head) + '\n'
 		for track in self.tracks:
@@ -317,7 +342,6 @@ class Piece:
 					s += self.arrToCsv(track.channelEvents[evCount]) + '\n'
 					evCount += 1
 			s += self.arrToCsv(endRow) + '\n'
-		print "endfile", self.endFile
 		s += self.arrToCsv(self.endFile) + '\n'
 		return s
 
@@ -362,10 +386,12 @@ class Piece:
 
 def fromHorizontal(notes):
 	''' This goes from the horizontal representation to a piece object '''
+
+	verbose("Converting Horizontal form to Piece Object")
+
 	newP = Piece()
 	newP.head = START_HEADERS_LIST
 	newP.endFile = END_HEADERS_LIST
-	print "\n\nNotes", notes
 	numLines = len(notes[0])
 	tracks = []
 	prevNote = -1
@@ -396,20 +422,21 @@ def fromHorizontal(notes):
 		# append the end of track line
 		line.append(genEndHeadersList(li, endTime))
 		# create a track from this note array
-		#print "line", line
 		track = Track(line)
 
 		tracks.append(track)
 	newP.tracks = tracks
 
 	return newP
-	#TODO finish
 
 
 
 def oneHotToHorizontal(notes):
 	''' Takes a 3 dimensional note array of the oneHotHorizontal form and returns
 	the horizontal form'''
+
+	verbose("Converting OneHotHorizontal form to Horizontal form")
+
 	newArr = []
 	for time in notes:
 		newTime = []
@@ -425,11 +452,12 @@ def oneHotToHorizontal(notes):
 
 
 
-
-
 def fromOneHotHorizontal(notes):
 	''' takes in an array of OneHotHorizontal vectors, and makes a Piece object
 	arr is a 3 dimensional array, arr[timeStep][line][index in pitch vector]'''
+
+	verbose("Converting OneHotHorizontal form to Piece object")
+
 	horizNotes = oneHotToHorizontal(notes)
 	return fromHorizontal(horizNotes)
 
@@ -437,6 +465,8 @@ def fromOneHotHorizontal(notes):
 def twoHotToHorizontal(notes):
 	''' Takes a piece in twoHotHorizontal representation and transforms it into
 	Horizontal representation '''
+
+	verbose("Converting TwoHotHorizontal form to Horizontal form")
 	
 	oneHot = []
 	# convert to one hot
@@ -458,6 +488,8 @@ def fromTwoHotHorizontal(notes):
 	''' takes a piece in TwoHotHorizontal and makes a piece objects from it
 	it returns the piece object '''
 
+	verbose("Converting TwoHotHorizontal form to Piece object")
+
 	horizNotes = twoHotToHorizontal(notes)
 	return fromHorizontal(horizNotes)
 
@@ -465,13 +497,18 @@ def fromTwoHotHorizontal(notes):
 
 
 
-
+def verbose(str):
+	if True:
+		print str
 
 
 
 
 
 def main():
+	''' This just has some random testing command right now '''
+
+
 	filename = 'ArtOfFugueExpo.csv'
 	p = Piece()
 	p.fromCSV(filename)
