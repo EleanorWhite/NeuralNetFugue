@@ -6,7 +6,7 @@ from keras.layers.core import Dense, Activation, Dropout
 from keras.layers.recurrent import LSTM
 
 
-TMP_MAX_LEN= 1
+TMP_MAX_LEN= 4
 
 
 
@@ -149,14 +149,20 @@ def modelTwoHot(piece, numLines, N_values, N_epochs):
     # that it is only using the previous note to predict the next one, rather than the whole 
     # last part of the piece
 
-    for i in range(0, len(piece) - 2*max_len, step):
+    for i in range(0, len(piece) - max_len - 1, step):
         print "piece i", piece[i]
-        sentences.append(piece[i])
-        print "flat", unwrap(piece[i + 1])
-        next_values.append(unwrap(piece[i + 1]))
+
+        # unwrap all note vectors
+        past = []
+        for note in piece[i:i+max_len]:
+            past.append(unwrap(note))
+        sentences.append(past)
+
+        print "flat", unwrap(piece[i + max_len + 1])
+        next_values.append(unwrap(piece[i + max_len + 1]))
     print('nb sequences:', len(sentences))
 
-    X = np.zeros((len(sentences), numLines, N_values), dtype=np.bool)
+    X = np.zeros((len(sentences), max_len, numLines*N_values), dtype=np.bool)
     y = np.zeros((len(sentences), numLines*N_values), dtype=np.bool)
 
     #print "\n\n\nx", sentences
@@ -175,7 +181,7 @@ def modelTwoHot(piece, numLines, N_values, N_epochs):
     model = Sequential()
     #model.add(LSTM(40, return_sequences=False, input_shape=(numLines, N_values)))
     #model.add(Dropout(0.2))
-    model.add(LSTM(30, return_sequences=True, input_shape=(numLines, N_values)))
+    model.add(LSTM(30, return_sequences=True, input_shape=(max_len, numLines*N_values)))
     model.add(Dropout(0.2))
     model.add(LSTM(30, return_sequences=False))
     model.add(Dropout(0.2))
@@ -206,55 +212,83 @@ def trainTwoHot(N_epochs):
     numLines = 4
     m = modelTwoHot(p1, numLines, thsize, N_epochs)
 
-    first = p1[0: 0 + TMP_MAX_LEN]
-    first = np.reshape(first, (1,numLines,thsize))
-    print "\n\n first", first
-    pred = m.predict(first)
-    pred = np.reshape(pred, (1,numLines,thsize))
-    print "\n\n\n prediction", pred
+    #first = p1[0: 0 + TMP_MAX_LEN]
+    #first = np.reshape(first, (1,TMP_MAX_LEN,numLines*thsize))
+    #print "\n\n first", first
+    #pred = m.predict(first)
+    #pred = np.reshape(pred, (1,numLines*thsize))
+    #print "\n\n\n prediction", pred
 
-    currentPred = first
+    #currentPred = first
 
     # add first prediction to general prediction list
-    fullPred = []
-    twoHotPred = []
-    for noteVec in pred[0]:
-        twoHotPred.append(goodRepTwoHot(np.ndarray.tolist(noteVec)))
-    fullPred.append(twoHotPred)
-    print "twoHotPred", twoHotPred
-    newData = np.reshape(np.asarray(twoHotPred), (1,numLines,thsize))
-    print "newData", newData
-    print "currentPred", currentPred
-    currentPred = np.concatenate((currentPred, newData), axis=0)
+    #fullPred = []
+    #twoHotPred = []
+    #for noteVec in pred[0]:
+    #    twoHotPred.append(goodRepTwoHot(np.ndarray.tolist(noteVec)))
+    #fullPred.append(twoHotPred)
+    #print "twoHotPred", twoHotPred
+    #newData = np.reshape(np.asarray(twoHotPred), (1,numLines,thsize))
+    #print "newData", newData
+    #print "currentPred", currentPred
+    #currentPred = np.concatenate((currentPred, newData), axis=0)
 
+
+    first = p1[0: 0 + TMP_MAX_LEN]
+    first = np.reshape(first, (1,TMP_MAX_LEN,numLines*thsize))
+
+    currentPred = first # the current four measures we're predicting off of
+    fullPred = first # the full prediction
 
     # predict a string of 32 notes
     # TODO: for this to make sense, you need to add the past history to each of the input
     # otherwise it will always think it is predicting the second note
-    for i in range(16*4):
+    lenComp = 16*4
+    for i in range(lenComp):
         print "current pred", currentPred
         pred = m.predict(currentPred)
+        pred = np.reshape(pred, (1,numLines*thsize))
         print "pred", pred
-        pred = np.reshape(pred, (1,numLines,thsize))
-
-        # force them to conform to the right pitch rep for oneHotHorizontal
-        for noteVec in pred[0]:
-            print goodRepTwoHot(np.ndarray.tolist(noteVec))
-        print "end measure"
 
         # put each note in a general oneHotHorizontal arrangement
         twoHotPred = []
-        for noteVec in pred[0]:
-            twoHotPred.append(goodRepTwoHot(np.ndarray.tolist(noteVec)))
-        fullPred.append(oneHotPred)
+        #for noteVec in pred:
+        # go through each note vector in the prediction 
+        listPred = np.ndarray.tolist(pred)
+        print "listPred", listPred
+        for line in range(0,numLines*thsize,thsize):
 
-        newData = np.reshape(np.asarray(twoHotPred), (1,numLines,thsize))
+            print "bad noteVec", listPred[0][line:line+thsize]
+            twoHotPred.append(goodRepTwoHot(listPred[0][line:line+thsize]))
+        #fullPred.append(oneHotPred)
+
+        newData = np.reshape(np.asarray(twoHotPred), (1,numLines*thsize))
+        #newData = np.reshape(np.asarray(twoHotPred), (1,numLines,thsize))
+
         print "newData", newData
-        print "currentPred", currentPred
-        currentPred = np.concatenate((currentPred, newData), axis=0)
+        print "currentPred[0]1", currentPred[0][1:]
+        currentPred = np.concatenate((currentPred[0][1:], newData), axis=0)
+        currentPred = np.reshape(currentPred, (1,TMP_MAX_LEN, numLines*thsize))
+        print "currentPred2", currentPred
+        print "fullPred[0]1", fullPred[0]
+        fullPred = np.concatenate((fullPred[0], newData), axis=0)
+        fullPred = np.reshape(fullPred, (1,TMP_MAX_LEN+i+1, numLines*thsize))
+        print "fullPred2", fullPred
+        #np.reshape(fullPred, (1,TMP_MAX_LEN + i, numLines*thsize))
+
+
+        # move current pred one timestep into the future
+        #currentPred = currentPred[1:] + pred
+        #print "currentPred after concat", currentPred
+
+    # how we used to reshape things:
+    #pred = np.reshape(pred, (1,numLines,thsize))
+    fullPred = np.reshape(fullPred, (TMP_MAX_LEN+lenComp, numLines, thsize))
+    fullPredArray = np.ndarray.tolist(fullPred)
+    print "fullPredArray", fullPredArray
 
     # transform oneHotHorizontal to piece and then to csv
-    predPiece = fromOneHotHorizontal(fullPred)
+    predPiece = fromTwoHotHorizontal(fullPredArray)
     predPieceCsv = open(outfile, 'w')
     predPieceCsv.write(predPiece.csv())
 
@@ -329,7 +363,7 @@ def trainTwoHot(N_epochs):
 
 
 def main(args):
-    trainTwoHot(1)
+    trainTwoHot(1000)
 
 
 
