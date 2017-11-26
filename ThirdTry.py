@@ -282,12 +282,12 @@ def modelCC(pieces, numPieces, numLines, N_values, N_epochs):
 
     # build a 2 stacked LSTM
     model = Sequential()
-    #model.add(LSTM(20, return_sequences=False, input_shape=(max_len, numLines*N_values)))
-    #model.add(Dropout(0.2))
-    model.add(LSTM(30, return_sequences=True, input_shape=(max_len, numLines*N_values)))
-    model.add(Dropout(0.1))
-    model.add(LSTM(30, return_sequences=False))
-    model.add(Dropout(0.1))
+    model.add(LSTM(100, return_sequences=False, input_shape=(max_len, numLines*N_values)))
+    model.add(Dropout(0.2))
+    #model.add(LSTM(30, return_sequences=True, input_shape=(max_len, numLines*N_values)))
+    #model.add(Dropout(0.1))
+    #model.add(LSTM(30, return_sequences=False))
+    #model.add(Dropout(0.1))
     model.add(Dense(numLines*N_values))
     model.add(Activation('hard_sigmoid')) # used to be softmax. consider
 
@@ -544,7 +544,7 @@ def trainCC(N_epochs):
 def main(args):
     #a = [0.8633742928504944, 0.8520313501358032, 0.6155416965484619, 0.8277215957641602, 0.7745899558067322, 0.6654524803161621, 0.5017514824867249, 0.5754479169845581, 0.3196893334388733, 0.364773690700531, 0.2010064721107483, 0.3020211458206177, 0.21267035603523254, 0.22699597477912903, 0.23443511128425598, 0.2467953860759735, 0.32214605808258057, 0.1710146963596344, 0.18880566954612732, 0.21740081906318665]
     #print goodRepCC(a)
-    trainCC(1)
+    trainCC(250)
 
 
 
