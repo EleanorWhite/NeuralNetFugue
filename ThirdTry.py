@@ -169,12 +169,12 @@ def modelTwoHot(piece, numLines, N_values, N_epochs):
 
     # build a 2 stacked LSTM
     model = Sequential()
-    model.add(LSTM(40, return_sequences=False, input_shape=(numLines, N_values)))
+    #model.add(LSTM(40, return_sequences=False, input_shape=(numLines, N_values)))
+    #model.add(Dropout(0.2))
+    model.add(LSTM(30, return_sequences=True, input_shape=(numLines, N_values)))
     model.add(Dropout(0.2))
-    #model.add(LSTM(128, return_sequences=True, input_shape=(numLines, N_values)))
-    #model.add(Dropout(0.2))
-    #model.add(LSTM(128, return_sequences=False))
-    #model.add(Dropout(0.2))
+    model.add(LSTM(30, return_sequences=False))
+    model.add(Dropout(0.2))
     model.add(Dense(numLines*N_values))
     model.add(Activation('hard_sigmoid')) # used to be softmax. consider
 
