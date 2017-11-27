@@ -183,7 +183,7 @@ def modelCC(pieces, numPieces, numLines, N_values, N_epochs):
 
     for piece in pieces:
         for i in range(0, len(piece) - max_len - 1, step):
-            print "piece i", piece[i]
+            #print "piece i", piece[i]
 
             # unwrap all note vectors
             past = []
@@ -191,9 +191,9 @@ def modelCC(pieces, numPieces, numLines, N_values, N_epochs):
                 past.append(unwrap(note))
             sentences.append(past)
 
-            print "flat", unwrap(piece[i + max_len + 1])
+            #print "flat", unwrap(piece[i + max_len + 1])
             next_values.append(unwrap(piece[i + max_len + 1]))
-        print('nb sequences:', len(sentences))
+        #print('nb sequences:', len(sentences))
 
     X = np.zeros((len(sentences), max_len, numLines*N_values), dtype=np.bool)
     y = np.zeros((len(sentences), numLines*N_values), dtype=np.bool)
@@ -204,7 +204,7 @@ def modelCC(pieces, numPieces, numLines, N_values, N_epochs):
 
     # make LSTM
     model = Sequential()
-    model.add(LSTM(150, return_sequences=False, input_shape=(max_len, numLines*N_values)))
+    model.add(LSTM(200, return_sequences=False, input_shape=(max_len, numLines*N_values)))
     model.add(Dropout(0.2))
     #model.add(LSTM(30, return_sequences=True, input_shape=(max_len, numLines*N_values)))
     #model.add(Dropout(0.1))
@@ -270,35 +270,28 @@ def trainTwoHot(N_epochs):
     # otherwise it will always think it is predicting the second note
     lenComp = 16*4
     for i in range(lenComp):
-        print "current pred", currentPred
         pred = m.predict(currentPred)
         pred = np.reshape(pred, (1,numLines*thsize))
-        print "pred", pred
 
         # put each note in a general oneHotHorizontal arrangement
         twoHotPred = []
         #for noteVec in pred:
         # go through each note vector in the prediction 
         listPred = np.ndarray.tolist(pred)
-        print "listPred", listPred
         for line in range(0,numLines*thsize,thsize):
 
-            print "bad noteVec", listPred[0][line:line+thsize]
             twoHotPred.append(goodRepTwoHot(listPred[0][line:line+thsize]))
         #fullPred.append(oneHotPred)
 
         newData = np.reshape(np.asarray(twoHotPred), (1,numLines*thsize))
         #newData = np.reshape(np.asarray(twoHotPred), (1,numLines,thsize))
 
-        print "newData", newData
-        print "currentPred[0]1", currentPred[0][1:]
         currentPred = np.concatenate((currentPred[0][1:], newData), axis=0)
         currentPred = np.reshape(currentPred, (1,TMP_MAX_LEN, numLines*thsize))
-        print "currentPred2", currentPred
-        print "fullPred[0]1", fullPred[0]
+
         fullPred = np.concatenate((fullPred[0], newData), axis=0)
         fullPred = np.reshape(fullPred, (1,TMP_MAX_LEN+i+1, numLines*thsize))
-        print "fullPred2", fullPred
+
         #np.reshape(fullPred, (1,TMP_MAX_LEN + i, numLines*thsize))
 
 
@@ -357,37 +350,28 @@ def trainCC(N_epochs):
     # otherwise it will always think it is predicting the second note
     lenComp = 16*4
     for i in range(lenComp):
-        print "current pred", currentPred
         pred = m.predict(currentPred)
         pred = np.reshape(pred, (1,numLines*thsize))
-        print "pred", pred
 
         # put each note in a general oneHotHorizontal arrangement
         CCPred = []
         #for noteVec in pred:
         # go through each note vector in the prediction 
         listPred = np.ndarray.tolist(pred)
-        print "listPred", listPred
         for line in range(0,numLines*thsize,thsize):
 
-            print "bad noteVec", listPred[0][line:line+thsize]
             CCPred.append(goodRepCC(listPred[0][line:line+thsize]))
-            print "good noteVec", goodRepCC(listPred[0][line:line+thsize])
         #fullPred.append(oneHotPred)
 
         newData = np.reshape(np.asarray(CCPred), (1,numLines*thsize))
         #newData = np.reshape(np.asarray(twoHotPred), (1,numLines,thsize))
 
-        print "newData", newData
-        print "currentPred[0]1", currentPred[0][1:]
         currentPred = np.concatenate((currentPred[0][1:], newData), axis=0)
         currentPred = np.reshape(currentPred, (1,TMP_MAX_LEN, numLines*thsize))
-        print "currentPred2", currentPred
-        print "fullPred[0]1", fullPred[0]
+
         fullPred = np.concatenate((fullPred[0], newData), axis=0)
         fullPred = np.reshape(fullPred, (1,TMP_MAX_LEN+i+1, numLines*thsize))
-        print "fullPred2", fullPred
-
+  
 
     # how we used to reshape things:
     #pred = np.reshape(pred, (1,numLines,thsize))
@@ -471,7 +455,7 @@ def trainCC(N_epochs):
 def main(args):
     #a = [0.8633742928504944, 0.8520313501358032, 0.6155416965484619, 0.8277215957641602, 0.7745899558067322, 0.6654524803161621, 0.5017514824867249, 0.5754479169845581, 0.3196893334388733, 0.364773690700531, 0.2010064721107483, 0.3020211458206177, 0.21267035603523254, 0.22699597477912903, 0.23443511128425598, 0.2467953860759735, 0.32214605808258057, 0.1710146963596344, 0.18880566954612732, 0.21740081906318665]
     #print goodRepCC(a)
-    trainCC(300)
+    trainCC(500)
 
 
 
