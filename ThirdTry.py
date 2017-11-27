@@ -204,12 +204,12 @@ def modelCC(pieces, numPieces, numLines, N_values, N_epochs):
 
     # make LSTM
     model = Sequential()
-    model.add(LSTM(200, return_sequences=False, input_shape=(max_len, numLines*N_values)))
-    model.add(Dropout(0.2))
-    #model.add(LSTM(30, return_sequences=True, input_shape=(max_len, numLines*N_values)))
-    #model.add(Dropout(0.1))
-    #model.add(LSTM(30, return_sequences=False))
-    #model.add(Dropout(0.1))
+    #model.add(LSTM(200, return_sequences=False, input_shape=(max_len, numLines*N_values)))
+    #model.add(Dropout(0.2))
+    model.add(LSTM(200, return_sequences=True, input_shape=(max_len, numLines*N_values)))
+    model.add(Dropout(0.1))
+    model.add(LSTM(200, return_sequences=False))
+    model.add(Dropout(0.1))
     model.add(Dense(numLines*N_values))
     model.add(Activation('hard_sigmoid')) # used to be softmax. consider
 
@@ -236,27 +236,6 @@ def trainTwoHot(N_epochs):
     thsize = 20 # num ints in twoHotHorizontal
     numLines = 4
     m = modelTwoHot(p1, numLines, thsize, N_epochs)
-
-    #first = p1[0: 0 + TMP_MAX_LEN]
-    #first = np.reshape(first, (1,TMP_MAX_LEN,numLines*thsize))
-    #print "\n\n first", first
-    #pred = m.predict(first)
-    #pred = np.reshape(pred, (1,numLines*thsize))
-    #print "\n\n\n prediction", pred
-
-    #currentPred = first
-
-    # add first prediction to general prediction list
-    #fullPred = []
-    #twoHotPred = []
-    #for noteVec in pred[0]:
-    #    twoHotPred.append(goodRepTwoHot(np.ndarray.tolist(noteVec)))
-    #fullPred.append(twoHotPred)
-    #print "twoHotPred", twoHotPred
-    #newData = np.reshape(np.asarray(twoHotPred), (1,numLines,thsize))
-    #print "newData", newData
-    #print "currentPred", currentPred
-    #currentPred = np.concatenate((currentPred, newData), axis=0)
 
 
     first = p1[0: 0 + TMP_MAX_LEN]
