@@ -204,7 +204,7 @@ def modelCC(pieces, numPieces, numLines, N_values, N_epochs):
 
     # make LSTM
     model = Sequential()
-    model.add(LSTM(100, return_sequences=False, input_shape=(max_len, numLines*N_values)))
+    model.add(LSTM(150, return_sequences=False, input_shape=(max_len, numLines*N_values)))
     model.add(Dropout(0.2))
     #model.add(LSTM(30, return_sequences=True, input_shape=(max_len, numLines*N_values)))
     #model.add(Dropout(0.1))
@@ -332,13 +332,18 @@ def trainCC(N_epochs):
     p2.fromCSV(filename)
     p2cc = p2.getCC()
 
+    filename = 'BachWTC1Expo.csv'
+    p3 = Piece()
+    p3.fromCSV(filename)
+    p3cc = p3.getCC()
+
     
 
     #build_model(p1, len(p1), 8)
     thsize = 20 # num ints in twoHotHorizontal
     numLines = 4
     numPieces = 2
-    m = modelCC([p1cc,p2cc], numPieces, numLines, thsize, N_epochs)
+    m = modelCC([p1cc,p2cc, p3cc], numPieces, numLines, thsize, N_epochs)
 
 
     first = p1cc[0: 0 + TMP_MAX_LEN]
@@ -466,7 +471,7 @@ def trainCC(N_epochs):
 def main(args):
     #a = [0.8633742928504944, 0.8520313501358032, 0.6155416965484619, 0.8277215957641602, 0.7745899558067322, 0.6654524803161621, 0.5017514824867249, 0.5754479169845581, 0.3196893334388733, 0.364773690700531, 0.2010064721107483, 0.3020211458206177, 0.21267035603523254, 0.22699597477912903, 0.23443511128425598, 0.2467953860759735, 0.32214605808258057, 0.1710146963596344, 0.18880566954612732, 0.21740081906318665]
     #print goodRepCC(a)
-    trainCC(250)
+    trainCC(300)
 
 
 
