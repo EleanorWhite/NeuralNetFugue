@@ -396,7 +396,7 @@ def trainOn4(N_epochs):
     thsize = 20 # num ints in twoHotHorizontal
     numLines = 3
     numPieces = 4
-    m = modelCC([p1cc,p2cc, p3cc, p4cc], numPieces, numLines, thsize, N_epochs)
+    m = modelCC([p1cc], numPieces, numLines, thsize, N_epochs)
 
     v = '1'
 
