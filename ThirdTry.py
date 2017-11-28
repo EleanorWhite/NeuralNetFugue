@@ -204,7 +204,7 @@ def modelCC(pieces, numPieces, numLines, N_values, N_epochs):
 
     # make LSTM
     model = Sequential()
-    model.add(LSTM(150, return_sequences=False, input_shape=(max_len, numLines*N_values)))
+    model.add(LSTM(500, return_sequences=False, input_shape=(max_len, numLines*N_values)))
     model.add(Dropout(0.2))
     #model.add(LSTM(200, return_sequences=True, input_shape=(max_len, numLines*N_values)))
     #model.add(Dropout(0.1))
@@ -271,13 +271,6 @@ def trainTwoHot(N_epochs):
         fullPred = np.concatenate((fullPred[0], newData), axis=0)
         fullPred = np.reshape(fullPred, (1,TMP_MAX_LEN+i+1, numLines*thsize))
 
-        #np.reshape(fullPred, (1,TMP_MAX_LEN + i, numLines*thsize))
-
-
-        # move current pred one timestep into the future
-        #currentPred = currentPred[1:] + pred
-        #print "currentPred after concat", currentPred
-
     # how we used to reshape things:
     #pred = np.reshape(pred, (1,numLines,thsize))
     fullPred = np.reshape(fullPred, (TMP_MAX_LEN+lenComp, numLines, thsize))
@@ -336,8 +329,6 @@ def trainCC(N_epochs):
     fullPred = first # the full prediction
 
     # predict a string of 32 notes
-    # TODO: for this to make sense, you need to add the past history to each of the input
-    # otherwise it will always think it is predicting the second note
     lenComp = 16*4
     for i in range(lenComp):
         pred = m.predict(currentPred)
@@ -351,10 +342,8 @@ def trainCC(N_epochs):
         for line in range(0,numLines*thsize,thsize):
 
             CCPred.append(goodRepCC(listPred[0][line:line+thsize]))
-        #fullPred.append(oneHotPred)
 
         newData = np.reshape(np.asarray(CCPred), (1,numLines*thsize))
-        #newData = np.reshape(np.asarray(twoHotPred), (1,numLines,thsize))
 
         currentPred = np.concatenate((currentPred[0][1:], newData), axis=0)
         currentPred = np.reshape(currentPred, (1,TMP_MAX_LEN, numLines*thsize))
@@ -364,7 +353,6 @@ def trainCC(N_epochs):
   
 
     # how we used to reshape things:
-    #pred = np.reshape(pred, (1,numLines,thsize))
     fullPred = np.reshape(fullPred, (TMP_MAX_LEN+lenComp, numLines, thsize))
     fullPredArray = np.ndarray.tolist(fullPred)
     print "fullPredArray", fullPredArray
@@ -373,6 +361,118 @@ def trainCC(N_epochs):
     predPiece = fromCC(fullPredArray)
     predPieceCsv = open(outfile, 'w')
     predPieceCsv.write(predPiece.csv())
+
+
+def trainOn4(N_epochs):
+
+    filename = 'ArtOfFugueExpoThreeLines.csv'
+    pred = Piece()
+    pred.fromCSV(filename)
+    predCC = pred.getCC()
+
+    outfile = 'out.csv'
+
+    filename = 'CBachWTC3Expo.csv'
+    p1 = Piece()
+    p1.fromCSV(filename)
+    p1cc = p1.getCC()
+
+    filename = 'CBachWTC9Expo.csv'
+    p2 = Piece()
+    p2.fromCSV(filename)
+    p2cc = p2.getCC()
+
+    filename = 'CSeventhArtOfFugueExpo.csv'
+    p3 = Piece()
+    p3.fromCSV(filename)
+    p3cc = p3.getCC()
+
+    filename = 'CbachFugue14Expo.csv'
+    p4 = Piece()
+    p4.fromCSV(filename)
+    p4cc = p4.getCC()
+
+    #build_model(p1, len(p1), 8)
+    thsize = 20 # num ints in twoHotHorizontal
+    numLines = 3
+    numPieces = 4
+    m = modelCC([p1cc,p2cc, p3cc, p4cc], numPieces, numLines, thsize, N_epochs)
+
+    v = '1'
+
+    predictStuff('outAOF' + v + '.csv', predCC, numLines, thsize, m)
+    predictStuff('outWTC3' + v + '.csv', p1cc, numLines, thsize, m)
+    predictStuff('outWTC9' + v + '.csv', p2cc, numLines, thsize, m)
+    predictStuff('outSAOF' + v + '.csv', p3cc, numLines, thsize, m)
+    predictStuff('outFF' + v + '.csv', p4cc, numLines, thsize, m)
+
+
+
+
+
+
+def predictStuff(outfile, predCC, numLines, thsize, m):
+
+
+    first = predCC[0: 0 + TMP_MAX_LEN]
+    first = np.reshape(first, (1,TMP_MAX_LEN,numLines*thsize))
+
+    currentPred = first # the current four measures we're predicting off of
+    fullPred = first # the full prediction
+
+    # predict a string of 32 notes
+    lenComp = 16*4
+    for i in range(lenComp):
+        pred = m.predict(currentPred)
+        pred = np.reshape(pred, (1,numLines*thsize))
+
+        # put each note in a general oneHotHorizontal arrangement
+        CCPred = []
+        #for noteVec in pred:
+        # go through each note vector in the prediction 
+        listPred = np.ndarray.tolist(pred)
+        for line in range(0,numLines*thsize,thsize):
+
+            CCPred.append(goodRepCC(listPred[0][line:line+thsize]))
+
+        newData = np.reshape(np.asarray(CCPred), (1,numLines*thsize))
+
+        currentPred = np.concatenate((currentPred[0][1:], newData), axis=0)
+        currentPred = np.reshape(currentPred, (1,TMP_MAX_LEN, numLines*thsize))
+
+        fullPred = np.concatenate((fullPred[0], newData), axis=0)
+        fullPred = np.reshape(fullPred, (1,TMP_MAX_LEN+i+1, numLines*thsize))
+  
+
+    # how we used to reshape things:
+    fullPred = np.reshape(fullPred, (TMP_MAX_LEN+lenComp, numLines, thsize))
+    fullPredArray = np.ndarray.tolist(fullPred)
+    print "fullPredArray", fullPredArray
+
+    # transform oneHotHorizontal to piece and then to csv
+    predPiece = fromCC(fullPredArray)
+    predPieceCsv = open(outfile, 'w')
+    predPieceCsv.write(predPiece.csv())
+
+
+
+
+def trainFullFugue(N_epochs):
+
+    filename = 'ArtOfFugueExpoThreeLines.csv'
+    pred = Piece()
+    pred.fromCSV(filename)
+    predCC = pred.getCC()
+
+    outfile = 'out.csv'
+
+    filename = 'CBachWTC3Expo.csv'
+    p1 = Piece()
+    p1.fromCSV(filename)
+    p1cc = p1.getCC()
+
+    
+
 
 
 
@@ -445,7 +545,7 @@ def trainCC(N_epochs):
 def main(args):
     #a = [0.8633742928504944, 0.8520313501358032, 0.6155416965484619, 0.8277215957641602, 0.7745899558067322, 0.6654524803161621, 0.5017514824867249, 0.5754479169845581, 0.3196893334388733, 0.364773690700531, 0.2010064721107483, 0.3020211458206177, 0.21267035603523254, 0.22699597477912903, 0.23443511128425598, 0.2467953860759735, 0.32214605808258057, 0.1710146963596344, 0.18880566954612732, 0.21740081906318665]
     #print goodRepCC(a)
-    trainCC(100)
+    trainOn4(500)
 
 
 
