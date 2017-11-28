@@ -506,15 +506,15 @@ def twoHotToHorizontal(notes):
 	for time in notes:
 		newTime = []
 		for line in time:
-			print "two hot input", line
+			#print "two hot input", line
 			# if the pitch vector is all 0s, then it is a rest
 			if not(1 in line[8:]): 
 				newTime.append([1] +[0]*12)
-				print "REST"
+				#print "REST"
 			else:
 				octave = line[0:8].index(1)
 				newTime.append([octave] + line[8:])
-				print "two hot output", [octave] + line[8:]
+				#print "two hot output", [octave] + line[8:]
 
 		oneHot.append(newTime)
 
@@ -539,12 +539,12 @@ def CCToHorizontal(notes):
 	CC = []
 	# convert to one hot
 	for time in notes:
-		print "time", time
+		#print "time", time
 		newTime = []
 		for line in time:
 			# if the pitch vector is all 0s, then it is a rest
 			if not(1 in line[8:]): 
-				print "REST"
+				#print "REST"
 				newTime.append([1]*8 +[0]*12)
 			else:
 				pitch = 0 # default
@@ -564,7 +564,7 @@ def CCToHorizontal(notes):
 					octave = line[0:8].index(0) - 1
 				newOctaveVec = [0]*8
 				newOctaveVec[octave] = 1
-				print "newVec", newOctaveVec + newPitchVec
+				#print "newVec", newOctaveVec + newPitchVec
 				newTime.append(newOctaveVec + newPitchVec)
 
 		CC.append(newTime)
