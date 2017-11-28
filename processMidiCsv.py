@@ -305,7 +305,7 @@ class Piece:
 		for time in hor:
 			newTime = []
 			for line in time:
-				print "line", line
+				#print "line", line
 				# if it is a rest, zero everything out
 				if line == 0:
 				    newTime.append([1]*8 + [0]*12)
@@ -313,11 +313,11 @@ class Piece:
 					# convert pitch int into one hot vector
 					pitch = line%12 + 1
 					pitchVec = [1]*pitch + [0]*(12-pitch)
-					print "pitchVec", pitchVec
+					#print "pitchVec", pitchVec
 					# convert octave int into one hot vector
 					octave = line/12 + 1
 					octaveVec = [1]*octave + [0]*(8-octave)
-					print "newLine", octaveVec + pitchVec
+					#print "newLine", octaveVec + pitchVec
 					newTime.append(octaveVec + pitchVec)
 
 			outList.append(newTime)
