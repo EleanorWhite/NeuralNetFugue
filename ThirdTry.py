@@ -298,24 +298,24 @@ def trainCC(N_epochs):
     pred.fromCSV(filename)
     predCC = pred.getCC()
 
-    outfile = 'out2.csv'
+    outfile = 'out.csv'
 
-    filename = 'BachWTC3Expo.csv'
+    filename = 'CBachWTC3Expo.csv'
     p1 = Piece()
     p1.fromCSV(filename)
     p1cc = p1.getCC()
 
-    filename = 'BachWTC9Expo.csv'
+    filename = 'CBachWTC9Expo.csv'
     p2 = Piece()
     p2.fromCSV(filename)
     p2cc = p2.getCC()
 
-    filename = 'SeventhArtOfFugue.csv'
+    filename = 'CSeventhArtOfFugueExpo.csv'
     p3 = Piece()
     p3.fromCSV(filename)
     p3cc = p3.getCC()
 
-    filename = 'bachFugue14Expo.csv'
+    filename = 'CbachFugue14Expo.csv'
     p4 = Piece()
     p4.fromCSV(filename)
     p4cc = p4.getCC()
