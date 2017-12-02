@@ -281,9 +281,9 @@ def modelRecurrent(x,y, numPieces, numLines, N_epochs):
 
     # make LSTM
     model = Sequential()
-    model.add(SimpleRNN(300, return_sequences=True, input_shape=(1, CC_SIZE*numLines*MAX_SECT_LEN)))
+    model.add(SimpleRNN(200, return_sequences=True, input_shape=(1, CC_SIZE*numLines*MAX_SECT_LEN)))
     model.add(Dropout(0.2))
-    model.add(SimpleRNN(300, return_sequences=False))
+    model.add(SimpleRNN(100, return_sequences=False))
     model.add(Dropout(0.2))
     #model.add(LSTM(200, return_sequences=True, input_shape=(max_len, numLines*N_values)))
     #model.add(Dropout(0.1))
