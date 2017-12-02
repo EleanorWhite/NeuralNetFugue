@@ -12,6 +12,7 @@ LONGEST = 16*16
 CCREST = [1]*8 + [0]*12
 CC_SIZE = 20
 
+MAX_SECT_LEN = 16*6 # maximum length of a section is 6 measures
 
 
 def goodRep(vec):
@@ -270,149 +271,6 @@ def modelCCPadding(pieces, numPieces, numLines, N_values, N_epochs):
     return model
 
 
-
-def trainTwoHot(N_epochs):
-
-    filename = 'ArtOfFugueExpo.csv'
-    outfile = 'out.csv'
-    p = Piece()
-    p.fromCSV(filename)
-    
-    #
-    print 
-    p1 = p.getTwoHotHorizontal()
-
-    #build_model(p1, len(p1), 8)
-    thsize = 20 # num ints in twoHotHorizontal
-    numLines = 4
-    m = modelTwoHot(p1, numLines, thsize, N_epochs)
-
-
-    first = p1[0: 0 + TMP_MAX_LEN]
-    first = np.reshape(first, (1,TMP_MAX_LEN,numLines*thsize))
-
-    currentPred = first # the current four measures we're predicting off of
-    fullPred = first # the full prediction
-
-    # predict a string of 32 notes
-    # TODO: for this to make sense, you need to add the past history to each of the input
-    # otherwise it will always think it is predicting the second note
-    lenComp = 16*4
-    for i in range(lenComp):
-        pred = m.predict(currentPred)
-        pred = np.reshape(pred, (1,numLines*thsize))
-
-        # put each note in a general oneHotHorizontal arrangement
-        twoHotPred = []
-        #for noteVec in pred:
-        # go through each note vector in the prediction 
-        listPred = np.ndarray.tolist(pred)
-        for line in range(0,numLines*thsize,thsize):
-
-            twoHotPred.append(goodRepTwoHot(listPred[0][line:line+thsize]))
-        #fullPred.append(oneHotPred)
-
-        newData = np.reshape(np.asarray(twoHotPred), (1,numLines*thsize))
-        #newData = np.reshape(np.asarray(twoHotPred), (1,numLines,thsize))
-
-        currentPred = np.concatenate((currentPred[0][1:], newData), axis=0)
-        currentPred = np.reshape(currentPred, (1,TMP_MAX_LEN, numLines*thsize))
-
-        fullPred = np.concatenate((fullPred[0], newData), axis=0)
-        fullPred = np.reshape(fullPred, (1,TMP_MAX_LEN+i+1, numLines*thsize))
-
-    # how we used to reshape things:
-    #pred = np.reshape(pred, (1,numLines,thsize))
-    fullPred = np.reshape(fullPred, (TMP_MAX_LEN+lenComp, numLines, thsize))
-    fullPredArray = np.ndarray.tolist(fullPred)
-    print "fullPredArray", fullPredArray
-
-    # transform oneHotHorizontal to piece and then to csv
-    predPiece = fromTwoHotHorizontal(fullPredArray)
-    predPieceCsv = open(outfile, 'w')
-    predPieceCsv.write(predPiece.csv())
-
-
-
-def trainCC(N_epochs):
-
-    filename = 'ArtOfFugueExpoThreeLines.csv'
-    pred = Piece()
-    pred.fromCSV(filename)
-    predCC = pred.getCC()
-
-    outfile = 'out.csv'
-
-    filename = 'CBachWTC3Expo.csv'
-    p1 = Piece()
-    p1.fromCSV(filename)
-    p1cc = p1.getCC()
-
-    filename = 'CBachWTC9Expo.csv'
-    p2 = Piece()
-    p2.fromCSV(filename)
-    p2cc = p2.getCC()
-
-    filename = 'CSeventhArtOfFugueExpo.csv'
-    p3 = Piece()
-    p3.fromCSV(filename)
-    p3cc = p3.getCC()
-
-    filename = 'CbachFugue14Expo.csv'
-    p4 = Piece()
-    p4.fromCSV(filename)
-    p4cc = p4.getCC()
-
-    
-
-    #build_model(p1, len(p1), 8)
-    thsize = 20 # num ints in twoHotHorizontal
-    numLines = 3
-    numPieces = 4
-    m = modelCC([p1cc,p2cc, p3cc, p4cc], numPieces, numLines, thsize, N_epochs)
-
-
-    first = predCC[0: 0 + TMP_MAX_LEN]
-    first = np.reshape(first, (1,TMP_MAX_LEN,numLines*thsize))
-
-    currentPred = first # the current four measures we're predicting off of
-    fullPred = first # the full prediction
-
-    # predict a string of 32 notes
-    lenComp = 16*4
-    for i in range(lenComp):
-        pred = m.predict(currentPred)
-        pred = np.reshape(pred, (1,numLines*thsize))
-
-        # put each note in a general oneHotHorizontal arrangement
-        CCPred = []
-        #for noteVec in pred:
-        # go through each note vector in the prediction 
-        listPred = np.ndarray.tolist(pred)
-        for line in range(0,numLines*thsize,thsize):
-
-            CCPred.append(goodRepCC(listPred[0][line:line+thsize]))
-
-        newData = np.reshape(np.asarray(CCPred), (1,numLines*thsize))
-
-        currentPred = np.concatenate((currentPred[0][1:], newData), axis=0)
-        currentPred = np.reshape(currentPred, (1,TMP_MAX_LEN, numLines*thsize))
-
-        fullPred = np.concatenate((fullPred[0], newData), axis=0)
-        fullPred = np.reshape(fullPred, (1,TMP_MAX_LEN+i+1, numLines*thsize))
-  
-
-    # how we used to reshape things:
-    fullPred = np.reshape(fullPred, (TMP_MAX_LEN+lenComp, numLines, thsize))
-    fullPredArray = np.ndarray.tolist(fullPred)
-    print "fullPredArray", fullPredArray
-
-    # transform oneHotHorizontal to piece and then to csv
-    predPiece = fromCC(fullPredArray)
-    predPieceCsv = open(outfile, 'w')
-    predPieceCsv.write(predPiece.csv())
-
-
 def getPieceSections(filename, firstLen, secondLen, thirdLen):
     p = Piece()
     p.fromCSV(filename)
@@ -420,6 +278,10 @@ def getPieceSections(filename, firstLen, secondLen, thirdLen):
     first = pcc[0:firstLen]
     second = pcc[firstLen: firstLen+secondLen]
     third = pcc[firstLen+secondLen: thirdLen]
+
+    # create x and y so that x = section n corresponds to y = section n+1
+    x = np.array([unwrap(first), unwrap(second)])
+    x = np.reshape(x, (
 
 
 def trainOn4(N_epochs):

@@ -211,7 +211,7 @@ def modelCC(pieces, numPieces, numLines, N_values, N_epochs):
 
     # make LSTM
     model = Sequential()
-    model.add(LSTM(500, return_sequences=False, input_shape=(max_len, numLines*N_values)))
+    model.add(LSTM(300, return_sequences=False, input_shape=(max_len, numLines*N_values)))
     model.add(Dropout(0.2))
     #model.add(LSTM(200, return_sequences=True, input_shape=(max_len, numLines*N_values)))
     #model.add(Dropout(0.1))
@@ -301,12 +301,12 @@ def modelCCPadding(pieces, numPieces, numLines, N_values, N_epochs):
 
     # make LSTM
     model = Sequential()
-    model.add(LSTM(400, return_sequences=False, input_shape=(LONGEST, numLines*N_values)))
-    model.add(Dropout(0.2))
-    #model.add(LSTM(200, return_sequences=True, input_shape=(max_len, numLines*N_values)))
-    #model.add(Dropout(0.1))
-    #model.add(LSTM(200, return_sequences=False))
-    #model.add(Dropout(0.1))
+    #model.add(LSTM(400, return_sequences=False, input_shape=(LONGEST, numLines*N_values)))
+    #model.add(Dropout(0.2))
+    model.add(LSTM(200, return_sequences=True, input_shape=(LONGEST, numLines*N_values)))
+    model.add(Dropout(0.1))
+    model.add(LSTM(200, return_sequences=False))
+    model.add(Dropout(0.1))
     model.add(Dense(numLines*N_values))
     model.add(Activation('hard_sigmoid')) # used to be softmax. consider
 
@@ -416,7 +416,7 @@ def trainCC(N_epochs):
     thsize = 20 # num ints in twoHotHorizontal
     numLines = 3
     numPieces = 4
-    m = modelCC([p1cc,p2cc, p3cc, p4cc], numPieces, numLines, thsize, N_epochs)
+    m = modelCC([p1cc, p2cc, p3cc, p4cc], numPieces, numLines, thsize, N_epochs)
 
 
     first = predCC[0: 0 + TMP_MAX_LEN]
@@ -493,9 +493,9 @@ def trainOn4(N_epochs):
     thsize = 20 # num ints in twoHotHorizontal
     numLines = 3
     numPieces = 4
-    m = modelCCPadding([p1cc], numPieces, numLines, thsize, N_epochs)
+    m = modelCCPadding([p1cc, p2cc, p3cc, p4cc], numPieces, numLines, thsize, N_epochs)
 
-    v = '4'
+    v = '9'
 
     predictStuffPadding('outAOF' + v + '.csv', predCC, numLines, thsize, m)
     predictStuffPadding('outWTC3' + v + '.csv', p1cc, numLines, thsize, m)
