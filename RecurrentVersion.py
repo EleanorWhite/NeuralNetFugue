@@ -281,7 +281,7 @@ def modelRecurrent(x,y, numPieces, numLines, N_epochs):
 
     # make LSTM
     model = Sequential()
-    model.add(SimpleRNN(200, return_sequences=True, input_shape=(1, CC_SIZE*numLines*MAX_SECT_LEN)))
+    model.add(SimpleRNN(100, return_sequences=True, input_shape=(1, CC_SIZE*numLines*MAX_SECT_LEN)))
     model.add(Dropout(0.2))
     model.add(SimpleRNN(100, return_sequences=False))
     model.add(Dropout(0.2))
@@ -389,7 +389,7 @@ def trainOn4(N_epochs):
     
     #m = modelCCPadding([p1cc], numPieces, numLines, thsize, N_epochs)
 
-    v = '10'
+    v = '12'
 
 
     predictStuff('outAOF' + v + '.csv', x1[0], x1[1], numLines, m)
@@ -422,7 +422,28 @@ def predictStuff(outfile, first, second, numLines, model):
 
     print "pred2", CCpred
 
-    predPiece = fromCC(CCpred)
+    pred2 = model.predict(second)
+    print "pred1", pred
+
+    # make it a standard shape
+    pred2 = np.reshape(pred2, (MAX_SECT_LEN,numLines, CC_SIZE))
+    predList2 = np.asarray(pred2)
+    CCpred2 = []
+    for time in predList2:
+        t = []
+        for note in time:
+            t.append(goodRepCC(note))
+        CCpred2.append(t)
+
+    print "pred2", CCpred2
+
+    fullPred = CCpred + CCpred2
+
+    print "fullPred", fullPred
+    print "fullpred End"
+
+
+    predPiece = fromCC(fullPred)
     predPieceCsv = open(outfile, 'w')
     predPieceCsv.write(predPiece.csv())
 
@@ -629,7 +650,7 @@ def trainFullFugue(N_epochs):
 def main(args):
     #a = [0.8633742928504944, 0.8520313501358032, 0.6155416965484619, 0.8277215957641602, 0.7745899558067322, 0.6654524803161621, 0.5017514824867249, 0.5754479169845581, 0.3196893334388733, 0.364773690700531, 0.2010064721107483, 0.3020211458206177, 0.21267035603523254, 0.22699597477912903, 0.23443511128425598, 0.2467953860759735, 0.32214605808258057, 0.1710146963596344, 0.18880566954612732, 0.21740081906318665]
     #print goodRepCC(a)
-    trainOn4(300)
+    trainOn4(200)
 
 
 
