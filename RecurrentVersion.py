@@ -389,7 +389,7 @@ def trainOn4(N_epochs):
     
     #m = modelCCPadding([p1cc], numPieces, numLines, thsize, N_epochs)
 
-    v = '12'
+    v = '13'
 
 
     predictStuff('outAOF' + v + '.csv', x1[0], x1[1], numLines, m)
@@ -406,9 +406,9 @@ def predictStuff(outfile, first, second, numLines, model):
     second = np.array([unwrap(unwrap(unwrap(second)))])
     second = np.reshape(second, (1, 1,  CC_SIZE*numLines*MAX_SECT_LEN))
 
-    print "FIRST", first
+    #print "FIRST", first
     pred = model.predict(first)
-    print "pred1", pred
+    #print "pred1", pred
 
     # make it a standard shape
     pred = np.reshape(pred, (MAX_SECT_LEN,numLines, CC_SIZE))
@@ -420,10 +420,10 @@ def predictStuff(outfile, first, second, numLines, model):
             t.append(goodRepCC(note))
         CCpred.append(t)
 
-    print "pred2", CCpred
+    #print "pred2", CCpred
 
     pred2 = model.predict(second)
-    print "pred1", pred
+    #print "pred1", pred
 
     # make it a standard shape
     pred2 = np.reshape(pred2, (MAX_SECT_LEN,numLines, CC_SIZE))
@@ -435,17 +435,31 @@ def predictStuff(outfile, first, second, numLines, model):
             t.append(goodRepCC(note))
         CCpred2.append(t)
 
-    print "pred2", CCpred2
+    #print "pred2", CCpred2
 
-    fullPred = CCpred + CCpred2
+    subj = np.reshape(first, (MAX_SECT_LEN,numLines, CC_SIZE))
 
-    print "fullPred", fullPred
-    print "fullpred End"
+    fullPred = deletePadding(np.ndarray.tolist(subj)) + deletePadding(CCpred) + deletePadding(CCpred2)
+
+    #print "fullPred", fullPred
+    #print "fullpred End"
 
 
     predPiece = fromCC(fullPred)
     predPieceCsv = open(outfile, 'w')
     predPieceCsv.write(predPiece.csv())
+
+
+def deletePadding(piece):
+    ''' Takes out everything that is a rest in all lines '''
+    for i in range(len(piece) -1, 0, -1):
+        print "PIECE", piece
+        for note in piece[i]:
+            #n = np.ndarray.tolist(note)
+            print "NOE", note
+            print (note == CCREST)
+            if not(note == CCREST):
+                return piece[:i+1]
 
 
 
@@ -650,7 +664,7 @@ def trainFullFugue(N_epochs):
 def main(args):
     #a = [0.8633742928504944, 0.8520313501358032, 0.6155416965484619, 0.8277215957641602, 0.7745899558067322, 0.6654524803161621, 0.5017514824867249, 0.5754479169845581, 0.3196893334388733, 0.364773690700531, 0.2010064721107483, 0.3020211458206177, 0.21267035603523254, 0.22699597477912903, 0.23443511128425598, 0.2467953860759735, 0.32214605808258057, 0.1710146963596344, 0.18880566954612732, 0.21740081906318665]
     #print goodRepCC(a)
-    trainOn4(200)
+    trainOn4(400)
 
 
 
