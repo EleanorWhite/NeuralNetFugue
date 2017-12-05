@@ -356,8 +356,9 @@ def trainOn4(N_epochs):
     filename = 'CbachFugue14Expo.csv'
     x5,y5 = getPieceSections(filename, 16*3, 16*3 + 6+14, 16*3+2, numLines)
 
-    filename = 'CArtOfFugueExpoThreeLines.csv'
+    filename = 'BachWTC1ExpoThreeLines.csv'
     x6,y6 = getPieceSections(filename, 8*3, 8*3, 8*4, numLines)
+
 
     #print "x1", x1
 
@@ -400,6 +401,9 @@ def trainOn4(N_epochs):
     predictStuff('outWTC9' + v + '.csv', x3[0], x3[1], numLines, m)
     predictStuff('outSAOF' + v + '.csv', x4[0], x4[1], numLines, m)
     predictStuff('outFF' + v + '.csv', x5[0], x5[1], numLines, m)
+    print "x6", x6
+    print len(x6)
+    print len(x6[0]), len(x6[1])
     predictStuff('outWTC1' + v + '.csv', x6[0], x6[1], numLines, m)
 
 
@@ -668,7 +672,7 @@ def trainFullFugue(N_epochs):
 def main(args):
     #a = [0.8633742928504944, 0.8520313501358032, 0.6155416965484619, 0.8277215957641602, 0.7745899558067322, 0.6654524803161621, 0.5017514824867249, 0.5754479169845581, 0.3196893334388733, 0.364773690700531, 0.2010064721107483, 0.3020211458206177, 0.21267035603523254, 0.22699597477912903, 0.23443511128425598, 0.2467953860759735, 0.32214605808258057, 0.1710146963596344, 0.18880566954612732, 0.21740081906318665]
     #print goodRepCC(a)
-    trainOn4(400)
+    trainOn4(1)
 
 
 
