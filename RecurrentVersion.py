@@ -338,7 +338,7 @@ def trainOn4(N_epochs):
     thsize = 20 # num ints in twoHotHorizontal
 
     #NOT BEING TRAINED ON
-    filename = 'ArtOfFugueExpoThreeLines.csv'
+    filename = 'CArtOfFugueExpoThreeLines.csv'
     x1,y1 = getPieceSections(filename, 16*4, 16*4, 16*4, numLines)
     
 
@@ -355,6 +355,9 @@ def trainOn4(N_epochs):
 
     filename = 'CbachFugue14Expo.csv'
     x5,y5 = getPieceSections(filename, 16*3, 16*3 + 6+14, 16*3+2, numLines)
+
+    filename = 'CArtOfFugueExpoThreeLines.csv'
+    x6,y6 = getPieceSections(filename, 8*3, 8*3, 8*4, numLines)
 
     #print "x1", x1
 
@@ -397,6 +400,7 @@ def trainOn4(N_epochs):
     predictStuff('outWTC9' + v + '.csv', x3[0], x3[1], numLines, m)
     predictStuff('outSAOF' + v + '.csv', x4[0], x4[1], numLines, m)
     predictStuff('outFF' + v + '.csv', x5[0], x5[1], numLines, m)
+    predictStuff('outWTC1' + v + '.csv', x6[0], x6[1], numLines, m)
 
 
 
