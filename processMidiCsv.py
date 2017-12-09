@@ -19,7 +19,6 @@ MIDI_SWITCH = 4 #amount of silence in midi note-switching
 
 START_HEADERS = '0, 0, Header, 1, 4, 480\n'
 START_HEADERS_LIST = ['0','0','Header', '1', '4', '480']
-# TODO: be able to change the track
 STANDARD_HEADERS ='1, 0, Start_track\n\
 1, 0, Time_signature, 2, 1, 24, 8\n\
 1, 0, Key_signature, 4, "major"\n\
@@ -43,7 +42,6 @@ def genStandardHeaders(trackNum):
 
 # TODO: consider whether you really want this time suig to be 2/2
 def genStandardHeadersList(trackNum):
-	#s = genStandardHeaders(trackNum)
 	return [[trackNum, '0', 'Start_track'], \
 	[trackNum, '0', 'Time_signature', '2', '1', '24', '8'], \
 	[trackNum, '0', 'Key_signature', '4', "major"], \
@@ -76,7 +74,6 @@ class Note:
 		+ str(self.channel) + ", " + str(self.pitch) + ", " + str(self.velocity)
 
 
-	#@classmethod
 def noteWithPitch(pitch, trackNum, time, on):
     ''' creates a note with specified value'''
     sel = Note(['0']*6)
@@ -97,7 +94,6 @@ def noteWithPitch(pitch, trackNum, time, on):
 
 class Track:
 
-	# TODO: change this to reflect 
 	def __init__(self, arr):
 
 		verbose("Creating track object")
